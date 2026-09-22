@@ -346,20 +346,9 @@ Contribuições são bem-vindas! Siga os passos:
 4. Push para a branch (`git push origin feature/AmazingFeature`)
 5. Abra um Pull Request
 
-## 📞 Contato
-
-- **Email**: seu-email@example.com
-- **GitHub**: [@seu-usuario](https://github.com/seu-usuario)
-- **LinkedIn**: [seu-linkedin](https://linkedin.com/in/seu-linkedin)
-
-## 🙏 Agradecimentos
-
-- Inspirado por projetos de aprendizado full-stack
-- Comunidade Node.js e Prisma
-- Contribuidores e testers
 
 ---
 
-**Made with ❤️ by [Seu Nome]**
+**Made with ❤️ by Cláudio Rodrigues**
 
 Última atualização: Setembro 2026
