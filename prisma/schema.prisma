@@ -26,6 +26,22 @@ model Restaurant {
   address     String?
   phone       String?
   rating      Float?
+  imageUrl    String?
   userId      Int
   user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Um restaurante possui VÁRIOS pratos
+  dishes      Dish[]
+}
+
+model Dish {
+  id           Int        @id @default(autoincrement())
+  name         String
+  description  String
+  price        Decimal
+  imageUrl     String?
+  restaurantId Int
+
+  // Cada prato pertence a UM restaurante (relação 1:N). Se o restaurante for apagado, seus pratos também.
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 }

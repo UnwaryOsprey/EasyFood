@@ -1,4 +1,4 @@
-import { findAllRestaurants, findUserRestaurants, findRestaurantById, createRestaurant, updateRestaurant, deleteRestaurant } from './restaurantService.js';
+import { findAllRestaurants, findUserRestaurants, findRestaurantById, createRestaurant, updateRestaurant, deleteRestaurant, updateRestaurantImage } from './restaurantService.js';
 
 export async function getRestaurants(req, res) {
   try {
@@ -136,5 +136,31 @@ export async function deleteRestaurantController(req, res) {
   } catch (error) {
     console.error('Erro ao deletar restaurante:', error);
     return res.status(500).json({ error: 'Erro interno no servidor' });
+  }
+}
+
+export async function uploadRestaurantImage(req, res) {
+  const id = Number(req.params.id);
+ 
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhuma imagem enviada' });
+    }
+ 
+    const restaurante = await findRestaurantById(id);
+ 
+    if (!restaurante) {
+      return res.status(404).json({ error: 'Restaurante não encontrado' });
+    }
+ 
+    if (restaurante.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Você não tem permissão para alterar este restaurante' });
+    }
+ 
+    const atualizado = await updateRestaurantImage(id, req.file.buffer);
+    return res.json(atualizado);
+  } catch (error) {
+    console.error('Erro ao enviar imagem do restaurante:', error);
+    return res.status(500).json({ error: 'Erro ao processar imagem' });
   }
 }
