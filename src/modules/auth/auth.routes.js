@@ -13,7 +13,7 @@ router.get('/me', verifyJWT, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: { id: true, name: true, email: true }
+      select: { id: true, name: true, email: true, imageUrl: true }
     });
 
     if (!user) {

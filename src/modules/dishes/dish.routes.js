@@ -14,4 +14,13 @@ router.post('/restaurants/:restaurantId/dishes', verifyJWT, dishController.creat
 // Upload: autenticação ANTES do upload
 router.post('/dishes/:dishId/image', verifyJWT, uploadSingleImage, dishController.uploadImage);
 
+// Editar nome, descrição e preço do prato
+router.put('/dishes/:dishId', verifyJWT, dishController.update);
+
+// Remover só a foto do prato
+router.delete('/dishes/:dishId/image', verifyJWT, dishController.removeImage);
+
+// Excluir o prato
+router.delete('/dishes/:dishId', verifyJWT, dishController.remove);
+
 export default router;

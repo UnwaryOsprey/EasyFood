@@ -8,13 +8,12 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  
-  
+  id          Int          @id @default(autoincrement())
+  name        String
+  email       String       @unique
+  password    String
+  imageUrl    String?
+  createdAt   DateTime     @default(now())
   restaurants Restaurant[]
 }
 
@@ -29,8 +28,6 @@ model Restaurant {
   imageUrl    String?
   userId      Int
   user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Um restaurante possui VÁRIOS pratos
   dishes      Dish[]
 }
 
@@ -41,7 +38,5 @@ model Dish {
   price        Decimal
   imageUrl     String?
   restaurantId Int
-
-  // Cada prato pertence a UM restaurante (relação 1:N). Se o restaurante for apagado, seus pratos também.
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 }
