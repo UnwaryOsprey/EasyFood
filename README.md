@@ -1,354 +1,198 @@
 # 🍽️ EasyFood
 
-> Uma aplicação web para gerenciar seus restaurantes favoritos com autenticação segura, persistência de dados e interface moderna.
+> Aplicação web para gerenciar restaurantes e cardápios, com autenticação JWT, upload de imagens otimizadas e envio de e-mails.
 
 ![Node.js](https://img.shields.io/badge/Node.js-v22-green?logo=node.js)
-![Express](https://img.shields.io/badge/Express-4.x-lightgrey?logo=express)
+![Express](https://img.shields.io/badge/Express-5.x-lightgrey?logo=express)
 ![SQLite](https://img.shields.io/badge/SQLite-3-blue?logo=sqlite)
-![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma)
+![Prisma](https://img.shields.io/badge/Prisma-5.22-2D3748?logo=prisma)
 ![JWT](https://img.shields.io/badge/JWT-Authentication-orange)
-![License](https://img.shields.io/badge/License-MIT-green)
 
-## 📸 Visão Geral
+Projeto da disciplina **Software Architecture & Design Patterns**.
 
-EasyFood é uma aplicação full-stack que permite aos usuários:
-- ✅ **Registrar e fazer login** com autenticação JWT segura
-- ✅ **Cadastrar restaurantes** com informações detalhadas (nome, categoria, endereço, telefone, avaliação)
-- ✅ **Organizar catálogo pessoal** de restaurantes
-- ✅ **Editar e deletar** restaurantes de forma rápida
-- ✅ **Filtrar por categoria** para encontrar rapidamente
-- ✅ **Visualizar estatísticas** (total, categorias, avaliação média)
+## 📸 Funcionalidades
+
+- **Autenticação**: cadastro, login e consulta do usuário logado (JWT).
+- **Restaurantes**: cadastrar, listar, editar e excluir (somente o dono altera), com filtro por categoria e estatísticas.
+- **Cardápio**: cadastrar, editar e excluir pratos (somente o dono do restaurante).
+- **Imagens**: foto do restaurante, do prato e do perfil do usuário. Enviadas com Multer, otimizadas com Sharp (WebP, até 800 px) e servidas em `/uploads`.
+- **E-mail**: o dono recebe uma confirmação ao cadastrar um restaurante (MailerSend). Se o envio falhar, o cadastro continua funcionando.
 
 ## 🏗️ Arquitetura
 
-### Stack Tecnológico
+Monólito modular em camadas:
+
 ```
-Frontend:  HTML5 + CSS3 + JavaScript Vanilla
-Backend:   Node.js + Express
-ORM:       Prisma
-Banco:     SQLite
-Auth:      JWT (JSON Web Tokens)
+Rota → Middleware (JWT) → Controller → Service → Prisma → SQLite
 ```
 
-### Estrutura em Camadas
+Serviços reutilizáveis ficam em `src/modules/shared/` (processamento de imagens e upload), usados por mais de um módulo.
+
 ```
-Routes → Controller → Service → Database → SQLite
+EASYFOOD/
+├── src/
+│   ├── app.js
+│   ├── server.js
+│   ├── lib/
+│   │   ├── prisma.js
+│   │   └── email.service.js
+│   ├── middlewares/
+│   │   └── authMiddleware.js          # verifyJWT
+│   └── modules/
+│       ├── auth/                      # cadastro, login, /auth/me
+│       ├── users/                     # foto de perfil
+│       ├── restaurants/               # CRUD + foto do restaurante
+│       ├── dishes/                    # cardápio + foto do prato
+│       └── shared/
+│           ├── image.service.js       # otimiza e salva/apaga imagens
+│           └── upload.middleware.js   # Multer (5 MB; jpeg/png/webp)
+├── public/                            # frontend (HTML, CSS e JS puro)
+├── prisma/
+│   ├── schema.prisma
+│   └── migrations/
+├── docs/adr/                          # decisões arquiteturais
+├── uploads/                           # imagens enviadas (fora do Git)
+├── .env                               # segredos (fora do Git)
+└── package.json
 ```
 
-## 🚀 Quick Start
+## 🚀 Como rodar
 
-### Pré-requisitos
-- Node.js >= v22
-- npm >= 10
-- Git
+**Pré-requisitos:** Node.js 22 ou superior e npm.
 
-### Instalação
-
-1. **Clone o repositório**
 ```bash
-git clone https://github.com/seu-usuario/easyfood.git
+git clone https://github.com/UnwaryOsprey/EasyFood.git
 cd easyfood
-```
-
-2. **Instale dependências**
-```bash
 npm install
 ```
 
-3. **Configure variáveis de ambiente**
+Crie o arquivo `.env` na raiz (veja a seção abaixo), depois prepare o banco e inicie:
+
 ```bash
-# Copie o arquivo de exemplo
-cp .env.example .env
-
-# Configure SECRET_KEY (importante para JWT!)
-# Você pode gerar uma com: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-4. **Prepare o banco de dados**
-```bash
-# Crie as tabelas (migrations)
-npx prisma migrate dev --name initial
-
-# Popule com dados de exemplo (opcional)
-npm run seed
-```
-
-5. **Inicie o servidor**
-```bash
+npx prisma migrate dev
+npx prisma generate
 npm run dev
 ```
 
-6. **Acesse a aplicação**
-```
-http://localhost:3000
-```
+Acesse `http://localhost:3000`.
 
-## 📚 Scripts Disponíveis
+### Scripts
 
 | Script | Descrição |
-|--------|-----------|
-| `npm run dev` | Inicia servidor em modo desenvolvimento |
-| `npm run seed` | Popula banco com dados de exemplo |
-| `npm run prisma:studio` | Abre Prisma Studio (interface visual do BD) |
-| `npm run prisma:migrate` | Executa migrations |
+|---|---|
+| `npm start` | Inicia o servidor |
+| `npm run dev` | Inicia com reinício automático (`--watch`) |
+| `npm run migrate` | Executa `prisma migrate dev` |
 
-## 📖 API Endpoints
+## 🔐 Variáveis de ambiente (`.env`)
 
-### Autenticação
+```env
+DATABASE_URL="file:./dev.db"
+JWT_SECRET="uma-chave-longa-e-secreta"
+PORT=3000
+
+# E-mail (MailerSend)
+MAILERSEND_API_KEY="sua-chave"
+EMAIL_FROM="noreply@seu-dominio.mlsender.net"
+EMAIL_FROM_NAME="EasyFood"
+```
+
+> ⚠️ Nunca envie o `.env` para o GitHub. No plano gratuito/de teste do MailerSend, só o e-mail do dono da conta recebe mensagens.
+
+## 📖 API
+
+Rotas marcadas com 🔒 exigem `Authorization: Bearer {token}`.
+
+### Autenticação e usuário
 ```
 POST /auth/register
 POST /auth/login
-GET  /auth/me
+GET  /auth/me                       🔒  dados do usuário logado (inclui imageUrl)
+POST /users/me/image                🔒  foto de perfil (multipart, campo "image")
 ```
 
-### Restaurantes (Públicos)
+### Restaurantes
 ```
-GET /restaurants              # Lista todos os restaurantes
-```
-
-### Restaurantes (Autenticado)
-```
-GET    /my-restaurants        # Restaurantes do usuário
-POST   /restaurants           # Criar novo restaurante
-PUT    /restaurants/:id       # Editar restaurante (owner only)
-DELETE /restaurants/:id       # Deletar restaurante (owner only)
+GET    /restaurants                 lista restaurantes
+GET    /my-restaurants              🔒  restaurantes do usuário
+POST   /restaurants                 🔒  cria (envia e-mail de confirmação)
+PUT    /restaurants/:id             🔒  edita (somente o dono)
+DELETE /restaurants/:id             🔒  exclui (somente o dono)
+POST   /restaurants/:id/image       🔒  foto do restaurante (somente o dono)
 ```
 
-### Headers Necessários (Rotas Autenticadas)
+### Pratos
 ```
-Authorization: Bearer {token}
-```
-
-## 🔐 Segurança
-
-- ✅ Senhas hasheadas com bcrypt
-- ✅ JWT com expiração de 1 hora
-- ✅ Autorização por ownership (apenas owner edita/deleta)
-- ✅ Validação de entrada
-- ✅ CORS configurado
-- ✅ Proteção contra SQL Injection (via Prisma)
-
-## 📂 Estrutura do Projeto
-
-```
-easy-food/
-├── src/
-│   ├── modules/
-│   │   ├── auth/
-│   │   │   ├── auth.controller.js
-│   │   │   ├── auth.middleware.js
-│   │   │   ├── auth.routes.js
-│   │   │   └── auth.service.js
-│   │   └── restaurants/
-│   │       ├── restaurant.controller.js
-│   │       ├── restaurant.routes.js
-│   │       └── restaurant.service.js
-│   ├── database/
-│   │   └── prisma.js
-│   ├── app.js
-│   └── server.js
-│
-├── public/
-│   ├── auth/
-│   │   ├── login.html
-│   │   └── register.html
-│   ├── css/
-│   │   ├── app.css
-│   │   └── auth.css
-│   ├── js/
-│   │   ├── app.js
-│   │   └── auth.js
-│   └── index.html
-│
-├── prisma/
-│   ├── schema.prisma
-│   ├── migrations/
-│   └── seed.js
-│
-├── docs/
-│   └── adr/
-│       ├── ADR-001-armazenar-restaurantes-em-memoria.md
-│       ├── ADR-002-escolha-do-banco-de-dados.md
-│       ├── ADR-003-persistencia-com-sqlite.md
-│       ├── ADR-004-autenticacao-com-jwt.md
-│       └── ADR-005-arquitetura-em-camadas.md
-│
-├── .env.example
-├── .gitignore
-├── package.json
-└── README.md
+GET    /restaurants/:restaurantId/dishes   lista o cardápio (público)
+POST   /restaurants/:restaurantId/dishes   🔒  cadastra prato (somente o dono)
+PUT    /dishes/:dishId                     🔒  edita prato (somente o dono)
+DELETE /dishes/:dishId                     🔒  exclui prato e foto (somente o dono)
+POST   /dishes/:dishId/image               🔒  envia/troca a foto
+DELETE /dishes/:dishId/image               🔒  remove só a foto
 ```
 
-## 🎯 Decisões Arquiteturais
+### Códigos de resposta mais comuns
 
-Todas as decisões importantes foram documentadas em ADRs (Architecture Decision Records).
+| Código | Quando |
+|---|---|
+| 400 | Dados inválidos, arquivo que não é jpeg/png/webp ou campo `image` ausente |
+| 401 | Token ausente ou inválido |
+| 403 | Usuário autenticado, mas não é o dono do recurso |
+| 404 | Restaurante, prato ou usuário não encontrado |
+| 413 | Imagem maior que 5 MB |
 
-Veja em `docs/adr/`:
-- **ADR-001**: Por que começamos com array em memória?
-- **ADR-002**: Por que SQLite?
-- **ADR-003**: Por que Prisma ORM?
-- **ADR-004**: Por que JWT?
-- **ADR-005**: Por que arquitetura em camadas?
+### Exemplo: enviar foto de um prato (Postman)
 
-## 🧪 Teste a API
+`POST /dishes/2/image` → aba **Body → form-data** → chave `image` (tipo **File**) → Authorization **Bearer Token**.
 
-### Com curl
+Resposta: o prato com `imageUrl: "/uploads/dishes/<uuid>.webp"`, que abre direto no navegador.
 
-**Registrar**
-```bash
-curl -X POST http://localhost:3000/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "João Silva",
-    "email": "joao@example.com",
-    "password": "senha123"
-  }'
-```
+## 🗄️ Banco de dados (Prisma + SQLite)
 
-**Login**
-```bash
-curl -X POST http://localhost:3000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "joao@example.com",
-    "password": "senha123"
-  }'
-```
+- **User**: id, name, email (único), password (hash bcrypt), imageUrl, createdAt
+- **Restaurant**: id, name, category, description, address, phone, rating, imageUrl, userId (→ User)
+- **Dish**: id, name, description, price (Decimal), imageUrl, restaurantId (→ Restaurant, exclusão em cascata)
 
-**Criar Restaurante** (substitua TOKEN)
-```bash
-curl -X POST http://localhost:3000/restaurants \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer TOKEN" \
-  -d '{
-    "name": "Pizzaria Napoli",
-    "category": "Italiana",
-    "description": "Melhor pizza da cidade",
-    "address": "Rua das Flores, 123",
-    "phone": "(11) 99999-9999",
-    "rating": 4.8
-  }'
-```
+Para visualizar os dados: `npx prisma studio`.
 
-### Com Postman
+## 🔒 Segurança
 
-1. Importe a URL: `http://localhost:3000`
-2. Configure a coleção com:
-   - POST /auth/register
-   - POST /auth/login
-   - GET /restaurants
-   - POST /restaurants (com Bearer token)
-   - PUT /restaurants/:id (com Bearer token)
-   - DELETE /restaurants/:id (com Bearer token)
+- Senhas com bcrypt.
+- JWT com expiração de 1 dia.
+- Autorização por dono: editar, excluir e enviar imagens só para o dono do recurso (403 para os demais).
+- Upload restrito a jpeg/png/webp, com limite de 5 MB. Nomes de arquivo gerados pelo servidor (UUID).
+- Apagar imagem do disco só dentro da pasta `uploads/`.
+- Frontend monta o HTML de forma segura, evitando XSS.
+- Consultas protegidas pelo Prisma contra SQL Injection.
 
-## 🌱 Seed de Dados
+## 🧠 Decisões arquiteturais (ADRs)
 
-Para popular o banco com dados de exemplo:
+Em `docs/adr/`:
 
-```bash
-npm run seed
-```
+- **ADR-001**: armazenar restaurantes em memória (ponto de partida)
+- **ADR-002**: escolha do banco de dados
+- **ADR-003**: persistência com SQLite
+- **ADR-004**: autenticação com JWT
+- **ADR-005**: arquitetura em camadas
+- **ADR-006**: envio de e-mails com MailerSend
+- **ADR-007**: processamento de imagens com Multer e Sharp (serviço compartilhado)
 
-Isso criará:
-- 2 usuários de exemplo
-- 3 restaurantes iniciais
+## 🐛 Problemas comuns
 
-## 🗄️ Banco de Dados
+- **`Unknown field imageUrl`**: o Prisma não foi atualizado. Rode `npx prisma migrate dev` e `npx prisma generate` e reinicie o servidor.
+- **`Cannot find package 'sharp'` ou `'multer'`**: rode `npm install`.
+- **Site preso em "Preparando seu catálogo…"**: o servidor está com erro ou o token expirou. Veja o terminal e faça login de novo.
+- **Alterei o `app.js` do site e nada mudou**: o servidor guarda `/assets` em cache por 1 hora. Troque o `?v=` no `index.html` e use Ctrl+Shift+R.
+- **E-mail não chegou**: no MailerSend de teste, só o e-mail do dono da conta recebe. O cadastro do restaurante funciona mesmo se o e-mail falhar.
 
-### Schema (Prisma)
+## 🚧 Próximos passos
 
-**User**
-- id (Int, PK)
-- email (String, Unique)
-- password (String, hashed)
-- name (String)
-- createdAt (DateTime)
+- Recuperação de senha
+- Testes automatizados
+- Validação com Zod
+- Paginação e busca
+- Armazenamento de imagens em nuvem (S3 ou similar) em vez do disco local
 
-**Restaurant**
-- id (Int, PK)
-- name (String)
-- category (String)
-- description (String, optional)
-- address (String, optional)
-- phone (String, optional)
-- rating (Float, optional)
-- userId (Int, FK → User)
+## 👨‍💻 Autor
 
-### Visualizar dados
-
-```bash
-npx prisma studio
-```
-
-Isso abre uma interface visual em http://localhost:5555
-
-## 📝 Variáveis de Ambiente
-
-Crie `.env` baseado em `.env.example`:
-
-```env
-# Banco de dados
-DATABASE_URL="file:./prisma/dev.db"
-
-# JWT
-JWT_SECRET="sua-chave-secreta-aqui"
-JWT_EXPIRATION="1h"
-
-# Servidor
-PORT=3000
-NODE_ENV="development"
-```
-
-**⚠️ Importante**: Nunca commite `.env` com valores reais no git!
-
-## 🐛 Troubleshooting
-
-### Erro: "database is locked"
-- Feche outras instâncias do servidor
-- Delete `prisma/dev.db` se corrompido
-- Execute `npx prisma migrate dev` novamente
-
-### Erro: "JWT Token inválido"
-- Verifique se o token foi enviado no header
-- Verifique formato: `Authorization: Bearer {token}`
-- Token expira em 1 hora, faça login novamente
-
-### Erro: "Restaurante não encontrado"
-- Verifique se o ID existe
-- Verifique se você é o owner do restaurante
-
-## 🚀 Próximos Passos / Roadmap
-
-- [ ] Refresh tokens
-- [ ] Rate limiting
-- [ ] Testes unitários (Jest)
-- [ ] Testes E2E (Playwright)
-- [ ] Validação com Zod/Joi
-- [ ] Soft deletes
-- [ ] Audit trail (quem criou/editou)
-- [ ] Avaliações e comentários
-- [ ] Upload de fotos
-- [ ] Notificações por email
-- [ ] Filtros avançados
-- [ ] Exportar catálogo (PDF/CSV)
-
-## 📄 Licença
-
-Este projeto está sob licença MIT. Veja [LICENSE](LICENSE) para mais detalhes.
-
-## 👨‍💻 Contribuindo
-
-Contribuições são bem-vindas! Siga os passos:
-
-1. Fork o repositório
-2. Crie uma branch (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
-
----
-
-**Made with ❤️ by Cláudio Rodrigues**
-
-Última atualização: Setembro 2026
+Cláudio Rodrigues — projeto acadêmico.
