@@ -1,5 +1,5 @@
 import prisma from '../../lib/prisma.js';
-import { sendEmail } from '../../lib/email.service.js';
+import { sendEmail } from '../shared/email.service.js';
 import { optimizeImage } from '../shared/image.service.js';
 
 export async function findAllRestaurants() {

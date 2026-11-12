@@ -26,7 +26,7 @@ Monólito modular em camadas:
 Rota → Middleware (JWT) → Controller → Service → Prisma → SQLite
 ```
 
-Serviços reutilizáveis ficam em `src/modules/shared/` (processamento de imagens e upload), usados por mais de um módulo.
+Serviços reutilizáveis ficam em `src/modules/shared/` (e-mail, processamento de imagens e upload), usados por mais de um módulo.
 
 ```
 EASYFOOD/
@@ -34,8 +34,7 @@ EASYFOOD/
 │   ├── app.js
 │   ├── server.js
 │   ├── lib/
-│   │   ├── prisma.js
-│   │   └── email.service.js
+│   │   └── prisma.js
 │   ├── middlewares/
 │   │   └── authMiddleware.js          # verifyJWT
 │   └── modules/
@@ -44,6 +43,7 @@ EASYFOOD/
 │       ├── restaurants/               # CRUD + foto do restaurante
 │       ├── dishes/                    # cardápio + foto do prato
 │       └── shared/
+│           ├── email.service.js       # envio de e-mails (MailerSend)
 │           ├── image.service.js       # otimiza e salva/apaga imagens
 │           └── upload.middleware.js   # Multer (5 MB; jpeg/png/webp)
 ├── public/                            # frontend (HTML, CSS e JS puro)
@@ -61,7 +61,7 @@ EASYFOOD/
 **Pré-requisitos:** Node.js 22 ou superior e npm.
 
 ```bash
-git clone https://github.com/UnwaryOsprey/EasyFood.git
+git clone URL-DO-REPOSITORIO
 cd easyfood
 npm install
 ```
